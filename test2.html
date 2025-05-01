@@ -80,6 +80,45 @@
     button:hover {
       background-color: #303f9f;
     }
+
+    /* Für kleinere Bildschirme */
+    @media screen and (max-width: 768px) {
+      .calendar {
+        width: 100%;
+        padding: 15px;
+        margin: 10px;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 15px;
+      }
+
+      .days {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+
+      .day {
+        padding: 8px;
+        min-height: 50px;
+        font-size: 14px;
+      }
+
+      .day-details {
+        padding: 10px;
+        font-size: 14px;
+      }
+
+      input[type="text"], input[type="time"] {
+        width: 100%;
+      }
+
+      button {
+        padding: 6px 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -95,7 +134,6 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -109,14 +147,6 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth();
-
-    // Auth-Check: Weiterleitung wenn nicht angemeldet
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "index.html";
-      }
-    });
 
     const daysContainer = document.getElementById("daysContainer");
     const monthYear = document.getElementById("monthYear");
@@ -221,24 +251,6 @@
 
     setInterval(checkNotifications, 60000);
     renderCalendar();
-
-    function checkUser() {
-      auth.onAuthStateChanged(user => {
-        if (!user) {
-          // Wenn der Benutzer nicht eingeloggt ist, zur Anmeldeseite weiterleiten
-          window.location.href = "index.html";
-        }
-      });
-    }
-
-     function logout() {
-      auth.signOut().then(() => {
-        alert('Erfolgreich abgemeldet');
-        window.location.href = "index.html.html";
-      }).catch(error => {
-        alert(error.message);
-      });
-    }
   </script>
 </body>
 </html>
