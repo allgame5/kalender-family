@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interaktiver Kalender mit Firebase</title>
+  <title>Interaktiver Kalender mit Firebase Realtime Database</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -96,7 +96,7 @@
   </style>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -134,17 +134,18 @@
   <script>
     // Firebase-Konfiguration
     const firebaseConfig = {
-      apiKey: "API_KEY",
-      authDomain: "PROJECT_ID.firebaseapp.com",
-      projectId: "PROJECT_ID",
-      storageBucket: "PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
+  authDomain: "kalender-3da21.firebaseapp.com",
+  projectId: "kalender-3da21",
+  storageBucket: "kalender-3da21.firebasestorage.app",
+  messagingSenderId: "731037868090",
+  appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
+  measurementId: "G-DTYRKLSD4L"
     };
 
     // Firebase initialisieren
     const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore(app);
+    const db = firebase.database(app);
 
     const currentDate = new Date();
 
@@ -194,18 +195,10 @@
 
     // Ereignisse für einen bestimmten Tag abrufen
     function getEventsForDay(year, month, day) {
-      return db.collection("events")
-        .where("year", "==", year)
-        .where("month", "==", month)
-        .where("day", "==", day)
-        .get()
-        .then(querySnapshot => {
-          const events = [];
-          querySnapshot.forEach(doc => {
-            events.push(doc.data());
-          });
-          return events;
-        });
+      return db.ref(`events/${year}/${month}/${day}`).once('value').then(snapshot => {
+        const events = snapshot.val();
+        return events ? Object.values(events) : [];
+      });
     }
 
     // Ereignisformular anzeigen
@@ -214,7 +207,7 @@
       if (eventId) {
         document.getElementById("edit-event").style.display = "block";
         document.getElementById("save-event").style.display = "none";
-        loadEventDetails(eventId);
+        loadEventDetails(year, month, day, eventId);
       } else {
         document.getElementById("edit-event").style.display = "none";
         document.getElementById("save-event").style.display = "block";
@@ -234,7 +227,7 @@
         const eventName = document.getElementById("event-name").value;
         const eventDescription = document.getElementById("event-description").value;
         if (eventName && eventDescription) {
-          editEvent(eventId, eventName, eventDescription);
+          editEvent(year, month, day, eventId, eventName, eventDescription);
           document.getElementById("event-form").style.display = "none";
           renderCalendar(currentDate);
         }
@@ -247,28 +240,31 @@
 
     // Ereignis speichern
     function saveEvent(year, month, day, eventName, eventDescription) {
-      db.collection("events").add({
-        year: year,
-        month: month,
-        day: day,
+      const newEventKey = db.ref().child('events').push().key;
+      const updates = {};
+      updates[`events/${year}/${month}/${day}/${newEventKey}`] = {
         name: eventName,
         description: eventDescription
-      });
+      };
+      return db.ref().update(updates);
     }
 
     // Ereignis bearbeiten
-    function editEvent(eventId, eventName, eventDescription) {
-      db.collection("events").doc(eventId).update({
+    function editEvent(year, month, day, eventId, eventName, eventDescription) {
+      const updates = {};
+      updates[`events/${year}/${month}/${day}/${eventId}`] = {
         name: eventName,
         description: eventDescription
-      });
+      };
+      return db.ref().update(updates);
     }
 
     // Ereignisdetails laden
-    function loadEventDetails(eventId) {
-      db.collection("events").doc(eventId).get().then(doc => {
-        document.getElementById("event-name").value = doc.data().name;
-        document.getElementById("event-description").value = doc.data().description;
+    function loadEventDetails(year, month, day, eventId) {
+      db.ref(`events/${year}/${month}/${day}/${eventId}`).once('value').then(snapshot => {
+        const event = snapshot.val();
+        document.getElementById("event-name").value = event.name;
+        document.getElementById("event-description").value = event.description;
       });
     }
 
