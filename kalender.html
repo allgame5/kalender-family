@@ -1,0 +1,326 @@
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;600&amp;display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Raleway', sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(135deg, #ADEDD5, #FBEE97);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Menüleiste */
+    .navbar {
+      width: 100%;
+      background: white;
+      padding: 15px 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 5;
+      position: fixed;
+      top: 0;
+      left: 0;
+      transform: translateY(-100%);
+      animation: slideIn 1s forwards ease-out;
+    }
+
+    .navbar h1 {
+      font-size: 24px;
+      color: #333;
+      transition: color 0.3s ease;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+    }
+
+    .nav-buttons button {
+      background: #12e8f0;
+      border: none;
+      padding: 12px 25px;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .nav-buttons button:hover {
+      background: #0cb5be;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+
+    /* Hauptinhalt */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 30px;
+      animation: fadeIn 1s ease forwards;
+      margin-top: 70px; /* Platz für die fixierte Navigationsleiste */
+    }
+
+    .main-content h2 {
+      font-size: 40px;
+      color: #333;
+      margin-bottom: 20px;
+      animation: bounce 1s infinite alternate;
+    }
+
+    .main-content p {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 30px;
+    }
+
+    .main-content button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #12e8f0;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+    }
+
+    .main-content button:hover {
+      background: #0cb5be;
+      transform: scale(1.05);
+    }
+
+    /* App-Links Bereich */
+    .app-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    .app-card {
+      background: white;
+      width: 150px;
+      height: 150px;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 15px;
+    }
+
+    .app-card img {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    .app-card span {
+      font-size: 16px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .app-card:hover {
+      transform: translateY(-5px) scale(1.05);
+      background: #f0f0f0;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+    /* Lade-Spinner */
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #12e8f0;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+    }
+
+    /* Logout-Overlay */
+    .logout-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 30;
+    }
+
+    .logout-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .logout-overlay h1 {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 20px;
+      animation: textPop 1s infinite alternate;
+    }
+
+    @keyframes textPop {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+
+    /* Animationen */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes bounce {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-15px); }
+    }
+
+    @keyframes slideIn {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Lade-Spinner -->
+<div class="loader" id="loader" style="display: none;"></div>
+
+<!-- Logout-Overlay -->
+<div class="logout-overlay" id="logoutOverlay">
+  <h1>Abmelden...</h1>
+  <div class="loader"></div>
+</div>
+
+<!-- Navigation -->
+<div class="navbar" id="navbar">
+  <h1>Willkommen 🏠</h1>
+  <div class="nav-buttons">
+    <button onclick="openPage()">Seite öffnen</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- Hauptinhalt -->
+<div class="main-content" id="mainContent">
+  <h2>Willkommen zurück, lieber Nutzer! 👋</h2>
+  <p>Schön, dass du wieder da bist. Entdecke neue Inhalte oder verwalte deine Einstellungen!</p>
+  <button onclick="openPage()">Weiter zu deiner Seite ➡️</button>
+
+  <!-- Neue App-Overlays -->
+  <div class="app-links">
+    <div class="app-card" onclick="window.open('https://onedrive.live.com/', '_blank')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/OneDrive_Icon.svg" alt="OneDrive">
+      <span>OneDrive</span>
+    </div>
+    <div class="app-card" onclick="window.open('https://drive.google.com/', '_blank')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Google_Drive_logo.png" alt="Google Drive">
+      <span>Google Drive</span>
+    </div>
+    <div class="app-card" onclick="window.open('https://outlook.live.com/', '_blank')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/Outlook.com_icon.svg" alt="Outlook">
+      <span>Outlook</span>
+    </div>
+    <div class="app-card" onclick="window.open('https://www.dropbox.com/', '_blank')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" alt="Dropbox">
+      <span>Dropbox</span>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBF01kd0JJ7lCQ4cLH5mtNBJPGDIZSjNU",
+    authDomain: "online-189a1.firebaseapp.com",
+    projectId: "online-189a1",
+    storageBucket: "online-189a1.appspot.com",
+    messagingSenderId: "614444215209",
+    appId: "1:614444215209:web:ed0f2b0d96d1a3e88ab2b8",
+    measurementId: "G-L4FMX6RE0V"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged(user => {
+    const loader = document.getElementById('loader');
+    const navbar = document.getElementById('navbar');
+    const mainContent = document.getElementById('mainContent');
+
+    if (user) {
+      loader.style.display = 'none';
+      navbar.style.display = 'flex';
+      mainContent.style.display = 'flex';
+    } else {
+      window.location.href = "index.html";
+    }
+  });
+
+  function logout() {
+    const overlay = document.getElementById('logoutOverlay');
+    overlay.classList.add('show');
+    
+    setTimeout(() => {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }, 2500);
+  }
+
+  function openPage() {
+    window.location.href = "deineseite.html"; // Hier wird später die neue Seite geöffnet
+  }
+</script>
+
+</body>
+</html>
