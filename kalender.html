@@ -3,183 +3,154 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalender & Anmeldung</title>
-
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap" rel="stylesheet">
-
-  <!-- FullCalendar CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.css" rel="stylesheet">
-
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Raleway', sans-serif;
-    }
-    html, body {
-      display: grid;
-      height: 100%;
-      width: 100%;
-      place-items: center;
-      background: linear-gradient(135deg, #9896F0, #FBC8D5);
-    }
-    ::selection {
-      background: #12e8f0;
-      color: #fff;
-    }
-    .wrapper {
-      overflow: hidden;
-      max-width: 390px;
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.15);
-      opacity: 0;
-      transform: scale(0.95);
-      animation: fadeInCard 0.8s ease-out forwards;
-    }
-    @keyframes fadeInCard {
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-    .wrapper .title-text {
-      display: flex;
-      width: 200%;
-    }
-    .wrapper .title {
-      width: 50%;
-      font-size: 35px;
-      font-weight: 600;
-      text-align: center;
-      transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-    /* Weitere Styles hier... */
-  </style>
+  <title>Apple Kalender</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+  <style>
+    /* Basis-Styling für den Kalender */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
+.calendar {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.calendar-day {
+  padding: 15px;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.calendar-day:hover {
+  background-color: #e0e0e0;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+button:focus {
+  outline: none;
+}
+
+  </style>
 <body>
-
-<div class="wrapper">
-  <!-- Kalender-Div (Nur sichtbar nach Anmeldung) -->
-  <div id="calendar-container" style="display: none;">
-    <h2>Dein Kalender</h2>
-    <div id="calendar"></div>
-  </div>
-
-  <!-- Login & Signup Formular -->
-  <div class="title-text">
-    <div class="title login">Login</div>
-    <div class="title signup">Signup</div>
-  </div>
-  
-  <!-- Anmeldeformular und Registrierung -->
-  <div class="form-container">
-    <div class="form-inner">
-      <form id="loginForm" onsubmit="login(event)">
-        <div class="field">
-          <input type="email" id="loginEmail" placeholder=" " required>
-          <label for="loginEmail">E-Mail</label>
-        </div>
-        <div class="field">
-          <input type="password" id="loginPassword" placeholder=" " required>
-          <label for="loginPassword">Passwort</label>
-        </div>
-        <div class="btn">
-          <div class="btn-layer"></div>
-          <input type="submit" value="Login">
-        </div>
-      </form>
-
-      <form id="signupForm" onsubmit="signup(event)">
-        <div class="field">
-          <input type="email" id="signupEmail" placeholder=" " required>
-          <label for="signupEmail">E-Mail</label>
-        </div>
-        <div class="field">
-          <input type="password" id="signupPassword" placeholder=" " required>
-          <label for="signupPassword">Passwort</label>
-        </div>
-        <div class="btn">
-          <div class="btn-layer"></div>
-          <input type="submit" value="Signup">
-        </div>
-      </form>
+  <div class="calendar">
+    <div class="calendar-header">
+      <button id="prev-month">←</button>
+      <span id="current-month">Mai 2025</span>
+      <button id="next-month">→</button>
+    </div>
+    <div class="calendar-weekdays">
+      <div>Mo</div>
+      <div>Di</div>
+      <div>Mi</div>
+      <div>Do</div>
+      <div>Fr</div>
+      <div>Sa</div>
+      <div>So</div>
+    </div>
+    <div class="calendar-days">
+      <!-- Dynamisch generierte Tage -->
     </div>
   </div>
 
-  <div id="error-message" class="error"></div>
-
-</div>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
-    authDomain: "kalender-3da21.firebaseapp.com",
-    projectId: "kalender-3da21",
-    storageBucket: "kalender-3da21.firebasestorage.app",
-    messagingSenderId: "731037868090",
-    appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
-    measurementId: "G-DTYRKLSD4L"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  function login(event) {
-    event.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    auth.signInWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        alert('Erfolgreich angemeldet: ' + userCredential.user.email);
-        document.getElementById('calendar-container').style.display = 'block';
-        loadCalendar();
-      })
-      .catch(error => {
-        document.getElementById('error-message').innerText = error.message;
-      });
-  }
-
-  function signup(event) {
-    event.preventDefault();
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        alert('Erfolgreich registriert: ' + userCredential.user.email);
-        window.location.href = "home.html";
-      })
-      .catch(error => {
-        document.getElementById('error-message').innerText = error.message;
-      });
-  }
-
-  function loadCalendar() {
-    const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-      initialView: 'dayGridMonth',
-      events: function(info, successCallback, failureCallback) {
-        const user = firebase.auth().currentUser;
-        const db = firebase.firestore();
-        const eventsRef = db.collection('events').where('uid', '==', user.uid);
-
-        eventsRef.get().then(snapshot => {
-          const events = snapshot.docs.map(doc => doc.data());
-          successCallback(events);
-        });
-      }
-    });
-    calendar.render();
-  }
-</script>
-
+  <script src="script.js"></script>
 </body>
+  <script>
+    const currentDate = new Date();
+
+function renderCalendar(date) {
+  const month = date.getMonth();
+  const year = date.getFullYear();
+
+  // Monatsnamen
+  const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+  document.getElementById("current-month").innerText = `${monthNames[month]} ${year}`;
+
+  // Ersten Tag des Monats und die Anzahl der Tage im Monat finden
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const daysContainer = document.querySelector(".calendar-days");
+  daysContainer.innerHTML = ''; // Leere den Container
+
+  // Leere Felder für Tage im ersten Teil des Monats
+  for (let i = 0; i < firstDay; i++) {
+    const emptyCell = document.createElement("div");
+    daysContainer.appendChild(emptyCell);
+  }
+
+  // Tage des Monats anzeigen
+  for (let i = 1; i <= daysInMonth; i++) {
+    const dayCell = document.createElement("div");
+    dayCell.classList.add("calendar-day");
+    dayCell.innerText = i;
+
+    // Optional: Event-Listener für das Klicken auf einen Tag
+    dayCell.addEventListener("click", () => {
+      alert(`Ereignis für den ${i}. ${monthNames[month]} ${year} hinzufügen.`);
+    });
+
+    daysContainer.appendChild(dayCell);
+  }
+}
+
+// Funktionen zum Wechseln der Monate
+document.getElementById("prev-month").addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar(currentDate);
+});
+
+document.getElementById("next-month").addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar(currentDate);
+});
+
+// Initiale Darstellung des Kalenders
+renderCalendar(currentDate);
+
+  </script>
 </html>
