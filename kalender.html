@@ -3,82 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kalender mit Firebase</title>
+  <title>Kalender</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f4f7fc;
       color: #333;
       margin: 0;
       padding: 0;
     }
     .calendar {
-      max-width: 800px;
+      max-width: 1000px;
       margin: 20px auto;
-      padding: 20px;
+      padding: 30px;
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
     }
     .header {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
       margin-bottom: 20px;
+    }
+    .header button {
+      background: #3f51b5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .header button:hover {
+      background: #303f9f;
+    }
+    .header h2 {
+      margin: 0 20px;
+      font-size: 24px;
+      color: #333;
     }
     .days {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
+      gap: 10px;
+      padding: 10px;
     }
     .day {
-      padding: 10px;
-      border: 1px solid #ccc;
-      min-height: 60px;
-      border-radius: 6px;
+      padding: 20px;
       background-color: #fff;
+      border-radius: 8px;
+      border: 1px solid #ddd;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .day:hover {
+      background-color: #f0f0f0;
+      transform: scale(1.05);
     }
     .event {
       background: #3f51b5;
       color: #fff;
-      padding: 3px 5px;
+      padding: 5px;
       border-radius: 4px;
-      margin-top: 5px;
       font-size: 12px;
-    }
-    .day:hover {
-      background-color: #f0f0f0;
+      margin-top: 5px;
     }
     .day-details {
-      padding: 15px;
-      border: 1px solid #ccc;
-      margin-top: 20px;
+      padding: 20px;
+      background: #fafafa;
       border-radius: 8px;
-      background-color: #fafafa;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      display: none;
     }
     input, label {
-      display: block;
-      margin: 8px 0;
+      width: 100%;
+      margin: 10px 0;
     }
     input[type="text"], input[type="time"] {
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
     }
     button {
+      padding: 10px 20px;
       background-color: #3f51b5;
-      color: #fff;
+      color: white;
       border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
+      border-radius: 5px;
+      font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background 0.3s;
     }
     button:hover {
       background-color: #303f9f;
+    }
+
+    /* Für kleinere Bildschirme */
+    @media screen and (max-width: 768px) {
+      .calendar {
+        width: 90%;
+        padding: 20px;
+        margin: 10px;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .days {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+
+      .day {
+        padding: 15px;
+        min-height: 50px;
+        font-size: 14px;
+      }
+
+      .day-details {
+        padding: 15px;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -90,7 +148,7 @@
       <button onclick="changeMonth(1)">❯</button>
     </div>
     <div class="days" id="daysContainer"></div>
-    <div class="day-details" id="dayDetails" style="display:none;"></div>
+    <div class="day-details" id="dayDetails"></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -98,13 +156,13 @@
 
   <script>
     const firebaseConfig = {
-apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
-  authDomain: "kalender-3da21.firebaseapp.com",
-  projectId: "kalender-3da21",
-  storageBucket: "kalender-3da21.firebasestorage.app",
-  messagingSenderId: "731037868090",
-  appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
-  measurementId: "G-DTYRKLSD4L"
+      apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
+      authDomain: "kalender-3da21.firebaseapp.com",
+      projectId: "kalender-3da21",
+      storageBucket: "kalender-3da21.firebasestorage.app",
+      messagingSenderId: "731037868090",
+      appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
+      measurementId: "G-DTYRKLSD4L"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
