@@ -222,14 +222,23 @@
     setInterval(checkNotifications, 60000);
     renderCalendar();
 
-    if (user) {
-      loader.style.display = 'none';
-      navbar.style.display = 'flex';
-      mainContent.style.display = 'flex';
-    } else {
-      window.location.href = "index.html";
+    function checkUser() {
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          // Wenn der Benutzer nicht eingeloggt ist, zur Anmeldeseite weiterleiten
+          window.location.href = "index.html";
+        }
+      });
     }
-  });
+
+     function logout() {
+      auth.signOut().then(() => {
+        alert('Erfolgreich abgemeldet');
+        window.location.href = "index.html.html";
+      }).catch(error => {
+        alert(error.message);
+      });
+    }
   </script>
 </body>
 </html>
