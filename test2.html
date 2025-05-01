@@ -221,6 +221,15 @@
 
     setInterval(checkNotifications, 60000);
     renderCalendar();
+
+    if (user) {
+      loader.style.display = 'none';
+      navbar.style.display = 'flex';
+      mainContent.style.display = 'flex';
+    } else {
+      window.location.href = "index.html";
+    }
+  });
   </script>
 </body>
 </html>
