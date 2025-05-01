@@ -95,19 +95,28 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
     const firebaseConfig = {
-apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
-  authDomain: "kalender-3da21.firebaseapp.com",
-  projectId: "kalender-3da21",
-  storageBucket: "kalender-3da21.firebasestorage.app",
-  messagingSenderId: "731037868090",
-  appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
-  measurementId: "G-DTYRKLSD4L"
+      apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
+      authDomain: "kalender-3da21.firebaseapp.com",
+      projectId: "kalender-3da21",
+      storageBucket: "kalender-3da21.firebasestorage.app",
+      messagingSenderId: "731037868090",
+      appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
+      measurementId: "G-DTYRKLSD4L"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Auth-Check: Weiterleitung wenn nicht angemeldet
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+      }
+    });
 
     const daysContainer = document.getElementById("daysContainer");
     const monthYear = document.getElementById("monthYear");
