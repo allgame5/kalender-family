@@ -5,12 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kalender mit Firebase</title>
   <style>
-    body { font-family: Arial; }
-    .calendar { max-width: 600px; margin: auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; }
-    .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
-    .day { padding: 10px; border: 1px solid #ccc; min-height: 60px; position: relative; }
-    .event { background: #3f51b5; color: #fff; padding: 2px 4px; margin-top: 4px; font-size: 12px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .calendar {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .day {
+      padding: 10px;
+      border: 1px solid #ccc;
+      min-height: 60px;
+      border-radius: 6px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .event {
+      background: #3f51b5;
+      color: #fff;
+      padding: 3px 5px;
+      border-radius: 4px;
+      margin-top: 5px;
+      font-size: 12px;
+    }
+    .day:hover {
+      background-color: #f0f0f0;
+    }
+    .day-details {
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+    input, label {
+      display: block;
+      margin: 8px 0;
+    }
+    input[type="text"], input[type="time"] {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #3f51b5;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #303f9f;
+    }
   </style>
 </head>
 <body>
@@ -21,27 +90,28 @@
       <button onclick="changeMonth(1)">❯</button>
     </div>
     <div class="days" id="daysContainer"></div>
+    <div class="day-details" id="dayDetails" style="display:none;"></div>
   </div>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
     const firebaseConfig = {
-      apiKey: "DEIN_API_KEY",
-      authDomain: "DEIN_PROJEKT.firebaseapp.com",
-      databaseURL: "https://kalender-3da21-default-rtdb.firebaseio.com",
-      projectId: "kalender-3da21",
-      storageBucket: "DEIN_PROJEKT.appspot.com",
-      messagingSenderId: "DEINE_ID",
-      appId: "DEINE_APP_ID"
+apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
+  authDomain: "kalender-3da21.firebaseapp.com",
+  projectId: "kalender-3da21",
+  storageBucket: "kalender-3da21.firebasestorage.app",
+  messagingSenderId: "731037868090",
+  appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
+  measurementId: "G-DTYRKLSD4L"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const daysContainer = document.getElementById("daysContainer");
     const monthYear = document.getElementById("monthYear");
+    const dayDetails = document.getElementById("dayDetails");
     let currentDate = new Date();
 
     function changeMonth(offset) {
@@ -51,6 +121,8 @@
 
     function renderCalendar() {
       daysContainer.innerHTML = "";
+      dayDetails.style.display = "none";
+
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
       const firstDay = new Date(year, month, 1).getDay();
@@ -58,7 +130,6 @@
 
       monthYear.textContent = currentDate.toLocaleString("de-DE", { month: "long", year: "numeric" });
 
-      // Leere Zellen für den ersten Wochentag
       for (let i = 0; i < firstDay; i++) {
         daysContainer.innerHTML += `<div></div>`;
       }
@@ -68,22 +139,15 @@
         const dayDiv = document.createElement("div");
         dayDiv.className = "day";
         dayDiv.innerHTML = `<strong>${day}</strong>`;
-        dayDiv.onclick = () => {
-          const title = prompt("Termin hinzufügen:");
-          if (title) {
-            db.ref("events/" + fullDate).push({ title });
-            renderCalendar(); // Neu laden
-          }
-        };
+        dayDiv.onclick = () => openDayDetails(fullDate);
 
-        // Termine abrufen
         db.ref("events/" + fullDate).once("value", snapshot => {
           const events = snapshot.val();
           if (events) {
             Object.values(events).forEach(ev => {
               const div = document.createElement("div");
               div.className = "event";
-              div.textContent = ev.title;
+              div.textContent = `${ev.title} (${ev.from}-${ev.to})`;
               dayDiv.appendChild(div);
             });
           }
@@ -93,6 +157,60 @@
       }
     }
 
+    function openDayDetails(date) {
+      dayDetails.style.display = "block";
+      dayDetails.innerHTML = `<h3>Termine am ${date}</h3><div id="eventList"></div><hr>
+        <label>Titel</label><input id="titleInput" type="text" />
+        <label>Von</label><input id="fromInput" type="time" />
+        <label>Bis</label><input id="toInput" type="time" />
+        <label><input id="notifyInput" type="checkbox" /> Benachrichtigen</label>
+        <button onclick="addEvent('${date}')">Speichern</button>`;
+
+      const list = document.getElementById("eventList");
+      db.ref("events/" + date).once("value", snapshot => {
+        const events = snapshot.val();
+        if (events) {
+          Object.values(events).forEach(ev => {
+            list.innerHTML += `<div>${ev.title} (${ev.from} - ${ev.to}) ${ev.notify ? '🔔' : ''}</div>`;
+          });
+        }
+      });
+    }
+
+    function addEvent(date) {
+      const title = document.getElementById("titleInput").value;
+      const from = document.getElementById("fromInput").value;
+      const to = document.getElementById("toInput").value;
+      const notify = document.getElementById("notifyInput").checked;
+
+      if (!title || !from || !to) {
+        alert("Bitte alle Felder ausfüllen.");
+        return;
+      }
+
+      db.ref("events/" + date).push({ title, from, to, notify });
+      renderCalendar();
+      openDayDetails(date);
+    }
+
+    function checkNotifications() {
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      db.ref("events/" + today).once("value", snapshot => {
+        const events = snapshot.val();
+        if (events) {
+          Object.values(events).forEach(ev => {
+            if (ev.notify && ev.from === currentTime) {
+              alert(`Erinnerung: ${ev.title} beginnt jetzt!`);
+            }
+          });
+        }
+      });
+    }
+
+    setInterval(checkNotifications, 60000);
     renderCalendar();
   </script>
 </body>
