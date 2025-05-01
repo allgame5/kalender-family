@@ -3,115 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apple Kalender mit Firebase</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Interaktiver Kalender mit Firebase</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .calendar {
+      width: 100%;
+      max-width: 700px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .calendar-day {
+      padding: 20px;
+      text-align: center;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .calendar-day:hover {
+      background-color: #e0e0e0;
+    }
+
+    #event-form {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    #event-form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    #event-form button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #event-form button.cancel {
+      background-color: #f44336;
+    }
+
+    #event-form button.edit {
+      background-color: #4CAF50;
+    }
+  </style>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
-  <style>
-    /* Basis-Styling für den Kalender */
-body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+<body>
 
-.calendar {
-  width: 100%;
-  max-width: 600px;
-  border-radius: 10px;
-  background-color: white;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.5em;
-  font-weight: bold;
-}
-
-.calendar-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-.calendar-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.calendar-day {
-  padding: 15px;
-  text-align: center;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.calendar-day:hover {
-  background-color: #e0e0e0;
-}
-
-button {
-  background-color: transparent;
-  border: none;
-  font-size: 1.5em;
-  cursor: pointer;
-}
-
-button:focus {
-  outline: none;
-}
-
-/* Formular für Ereignisse */
-#event-form {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#event-form input {
-  padding: 10px;
-  margin-bottom: 10px;
-  width: 100%;
-}
-
-#event-form button {
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-  </style>
-  <body>
   <div class="calendar">
     <div class="calendar-header">
       <button id="prev-month">←</button>
       <span id="current-month">Mai 2025</span>
       <button id="next-month">→</button>
     </div>
+
     <div class="calendar-weekdays">
       <div>Mo</div>
       <div>Di</div>
@@ -121,139 +116,176 @@ button:focus {
       <div>Sa</div>
       <div>So</div>
     </div>
+
     <div class="calendar-days">
       <!-- Dynamisch generierte Tage -->
     </div>
   </div>
 
-  <!-- Ereignis hinzufügen Formular -->
+  <!-- Ereignis Formular -->
   <div id="event-form" style="display:none;">
-    <input type="text" id="event-name" placeholder="Ereignisname">
+    <input type="text" id="event-name" placeholder="Ereignisname" />
+    <textarea id="event-description" placeholder="Beschreibung" rows="4"></textarea>
     <button id="save-event">Ereignis speichern</button>
-    <button id="close-form">Schließen</button>
+    <button id="edit-event" class="edit" style="display:none;">Ereignis bearbeiten</button>
+    <button id="cancel-form" class="cancel">Schließen</button>
   </div>
 
-  <script src="script.js"></script>
-</body>
   <script>
-    // Firebase-Konfiguration (ersetze mit deinen eigenen Firebase-Daten)
-const firebaseConfig = {
-  apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
-  authDomain: "kalender-3da21.firebaseapp.com",
-  projectId: "kalender-3da21",
-  storageBucket: "kalender-3da21.firebasestorage.app",
-  messagingSenderId: "731037868090",
-  appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
-  measurementId: "G-DTYRKLSD4L"
-};
+    // Firebase-Konfiguration
+    const firebaseConfig = {
+      apiKey: "API_KEY",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
 
-// Firebase initialisieren
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(app);
+    // Firebase initialisieren
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(app);
 
-const currentDate = new Date();
+    const currentDate = new Date();
 
-// Kalender rendern
-function renderCalendar(date) {
-  const month = date.getMonth();
-  const year = date.getFullYear();
+    // Kalender rendern
+    function renderCalendar(date) {
+      const month = date.getMonth();
+      const year = date.getFullYear();
 
-  // Monatsnamen
-  const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-  document.getElementById("current-month").innerText = `${monthNames[month]} ${year}`;
+      // Monatsnamen
+      const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+      document.getElementById("current-month").innerText = `${monthNames[month]} ${year}`;
 
-  // Ersten Tag des Monats und die Anzahl der Tage im Monat finden
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+      // Ersten Tag des Monats und die Anzahl der Tage im Monat finden
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const daysContainer = document.querySelector(".calendar-days");
-  daysContainer.innerHTML = ''; // Leere den Container
+      const daysContainer = document.querySelector(".calendar-days");
+      daysContainer.innerHTML = ''; // Leere den Container
 
-  // Leere Felder für Tage im ersten Teil des Monats
-  for (let i = 0; i < firstDay; i++) {
-    const emptyCell = document.createElement("div");
-    daysContainer.appendChild(emptyCell);
-  }
-
-  // Tage des Monats anzeigen
-  for (let i = 1; i <= daysInMonth; i++) {
-    const dayCell = document.createElement("div");
-    dayCell.classList.add("calendar-day");
-    dayCell.innerText = i;
-
-    // Ereignisse für diesen Tag abrufen
-    getEventsForDay(year, month, i).then(events => {
-      if (events.length > 0) {
-        dayCell.style.backgroundColor = "#e0f7fa"; // Markiere Tage mit Ereignissen
-        dayCell.title = "Ereignisse für diesen Tag"; // Tooltip anzeigen
+      // Leere Felder für Tage im ersten Teil des Monats
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement("div");
+        daysContainer.appendChild(emptyCell);
       }
-    });
 
-    // Event-Listener für das Hinzufügen von Ereignissen
-    dayCell.addEventListener("click", () => {
-      showEventForm(year, month, i);
-    });
+      // Tage des Monats anzeigen
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dayCell = document.createElement("div");
+        dayCell.classList.add("calendar-day");
+        dayCell.innerText = i;
 
-    daysContainer.appendChild(dayCell);
-  }
-}
+        // Ereignisse für diesen Tag abrufen
+        getEventsForDay(year, month, i).then(events => {
+          if (events.length > 0) {
+            dayCell.style.backgroundColor = "#e0f7fa"; // Markiere Tage mit Ereignissen
+          }
+        });
 
-// Ereignisse für einen bestimmten Tag abrufen
-function getEventsForDay(year, month, day) {
-  return db.collection("events")
-    .where("year", "==", year)
-    .where("month", "==", month)
-    .where("day", "==", day)
-    .get()
-    .then(querySnapshot => {
-      const events = [];
-      querySnapshot.forEach(doc => {
-        events.push(doc.data());
-      });
-      return events;
-    });
-}
+        // Event-Listener für das Hinzufügen von Ereignissen
+        dayCell.addEventListener("click", () => {
+          showEventForm(year, month, i);
+        });
 
-// Ereignisformular anzeigen
-function showEventForm(year, month, day) {
-  document.getElementById("event-form").style.display = "block";
-
-  document.getElementById("save-event").onclick = () => {
-    const eventName = document.getElementById("event-name").value;
-    if (eventName) {
-      saveEvent(year, month, day, eventName);
-      document.getElementById("event-form").style.display = "none";
-      renderCalendar(currentDate); // Kalender neu rendern
+        daysContainer.appendChild(dayCell);
+      }
     }
-  };
 
-  document.getElementById("close-form").onclick = () => {
-    document.getElementById("event-form").style.display = "none";
-  };
-}
+    // Ereignisse für einen bestimmten Tag abrufen
+    function getEventsForDay(year, month, day) {
+      return db.collection("events")
+        .where("year", "==", year)
+        .where("month", "==", month)
+        .where("day", "==", day)
+        .get()
+        .then(querySnapshot => {
+          const events = [];
+          querySnapshot.forEach(doc => {
+            events.push(doc.data());
+          });
+          return events;
+        });
+    }
 
-// Ereignis speichern
-function saveEvent(year, month, day, eventName) {
-  db.collection("events").add({
-    year: year,
-    month: month,
-    day: day,
-    name: eventName
-  });
-}
+    // Ereignisformular anzeigen
+    function showEventForm(year, month, day, eventId = null) {
+      document.getElementById("event-form").style.display = "block";
+      if (eventId) {
+        document.getElementById("edit-event").style.display = "block";
+        document.getElementById("save-event").style.display = "none";
+        loadEventDetails(eventId);
+      } else {
+        document.getElementById("edit-event").style.display = "none";
+        document.getElementById("save-event").style.display = "block";
+      }
 
-// Monat wechseln
-document.getElementById("prev-month").addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar(currentDate);
-});
+      document.getElementById("save-event").onclick = () => {
+        const eventName = document.getElementById("event-name").value;
+        const eventDescription = document.getElementById("event-description").value;
+        if (eventName && eventDescription) {
+          saveEvent(year, month, day, eventName, eventDescription);
+          document.getElementById("event-form").style.display = "none";
+          renderCalendar(currentDate); // Kalender neu rendern
+        }
+      };
 
-document.getElementById("next-month").addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar(currentDate);
-});
+      document.getElementById("edit-event").onclick = () => {
+        const eventName = document.getElementById("event-name").value;
+        const eventDescription = document.getElementById("event-description").value;
+        if (eventName && eventDescription) {
+          editEvent(eventId, eventName, eventDescription);
+          document.getElementById("event-form").style.display = "none";
+          renderCalendar(currentDate);
+        }
+      };
 
-// Initiale Darstellung des Kalenders
-renderCalendar(currentDate);
+      document.getElementById("cancel-form").onclick = () => {
+        document.getElementById("event-form").style.display = "none";
+      };
+    }
+
+    // Ereignis speichern
+    function saveEvent(year, month, day, eventName, eventDescription) {
+      db.collection("events").add({
+        year: year,
+        month: month,
+        day: day,
+        name: eventName,
+        description: eventDescription
+      });
+    }
+
+    // Ereignis bearbeiten
+    function editEvent(eventId, eventName, eventDescription) {
+      db.collection("events").doc(eventId).update({
+        name: eventName,
+        description: eventDescription
+      });
+    }
+
+    // Ereignisdetails laden
+    function loadEventDetails(eventId) {
+      db.collection("events").doc(eventId).get().then(doc => {
+        document.getElementById("event-name").value = doc.data().name;
+        document.getElementById("event-description").value = doc.data().description;
+      });
+    }
+
+    // Monat wechseln
+    document.getElementById("prev-month").addEventListener("click", () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar(currentDate);
+    });
+
+    document.getElementById("next-month").addEventListener("click", () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar(currentDate);
+    });
+
+    // Initiale Darstellung des Kalenders
+    renderCalendar(currentDate);
   </script>
+
+</body>
 </html>
