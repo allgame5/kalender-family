@@ -1,142 +1,56 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalender</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f7f7f7;
-    }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kalender mit Ereignissen</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-    .calendar-container {
-      width: 80%;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #fff;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-
-    #calendar {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .calendar-header {
-      text-align: center;
-      background-color: #f4f4f4;
-      font-weight: bold;
-      padding: 10px 0;
-    }
-
-    .calendar-day {
-      padding: 15px;
-      width: 50px;
-      text-align: center;
-      border: 1px solid #ddd;
-      cursor: pointer;
-      background-color: #fff;
-      transition: background-color 0.3s;
-    }
-
-    .calendar-day:hover {
-      background-color: #e4e4e4;
-    }
-
-    .calendar-day.has-event {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .event-tooltip {
-      position: absolute;
-      background-color: #4CAF50;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 12px;
-      margin-top: -25px;
-      cursor: pointer;
-    }
-
-    .event-tooltip:hover {
-      background-color: #45a049;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="calendar-container">
-    <h1>Kalender</h1>
-    <div id="calendar"></div>
-  </div>
-
-  <script>
-    // Firebase-Konfiguration
     const firebaseConfig = {
       apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
-  authDomain: "kalender-3da21.firebaseapp.com",
-  projectId: "kalender-3da21",
-  storageBucket: "kalender-3da21.firebasestorage.app",
-  messagingSenderId: "731037868090",
-  appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
-  measurementId: "G-DTYRKLSD4L"
+      authDomain: "kalender-3da21.firebaseapp.com",
+      projectId: "kalender-3da21",
+      storageBucket: "kalender-3da21.appspot.com",
+      messagingSenderId: "731037868090",
+      appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
+      measurementId: "G-DTYRKLSD4L",
+      databaseURL: "https://kalender-3da21-default-rtdb.europe-west1.firebasedatabase.app"
     };
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    // Aktuellen Monat und Jahr berechnen
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-
-    // Anzahl der Tage im Monat
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    // Erster Tag des Monats
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
 
-    // Ereignisse laden
-    const events = {};
+    let events = {};
 
     function loadEvents() {
-      const eventsRef = db.ref('events');
-      eventsRef.on('value', snapshot => {
-        const data = snapshot.val();
-        for (const day in data) {
-          events[day] = data[day];
-        }
+      const eventsRef = ref(db, 'events');
+      onValue(eventsRef, (snapshot) => {
+        events = snapshot.val() || {};
         renderCalendar();
       });
     }
 
-    // Kalender rendern
     function renderCalendar() {
       let calendarHTML = '<table id="calendar">';
       calendarHTML += '<tr class="calendar-header">';
       calendarHTML += '<th>So</th><th>Mo</th><th>Di</th><th>Mi</th><th>Do</th><th>Fr</th><th>Sa</th>';
       calendarHTML += '</tr><tr>';
 
-      // Leere Zellen vor dem ersten Tag
       for (let i = 0; i < firstDay; i++) {
         calendarHTML += '<td></td>';
       }
 
-      // Tage des Monats
       for (let i = 1; i <= daysInMonth; i++) {
-        const dayHasEvent = events[i] ? 'has-event' : '';
-        calendarHTML += `<td class="calendar-day ${dayHasEvent}" onclick="showEvents(${i})">${i}</td>`;
+        const hasEvent = events[i] ? 'has-event' : '';
+        calendarHTML += `<td class="calendar-day ${hasEvent}" onclick="showEvents(${i})">${i}</td>`;
         if ((i + firstDay) % 7 === 0) {
           calendarHTML += '</tr><tr>';
         }
@@ -146,18 +60,94 @@
       document.getElementById('calendar').innerHTML = calendarHTML;
     }
 
-    // Ereignisse für den Tag anzeigen
-    function showEvents(day) {
-      if (events[day]) {
-        alert(`Ereignisse für den ${day}: ${events[day].join(', ')}`);
+    window.showEvents = function(day) {
+      const eintraege = events[day];
+      if (eintraege) {
+        alert(`Termine am ${day}.: ${eintraege.join(', ')}`);
       } else {
-        alert('Keine Ereignisse für diesen Tag.');
+        alert("Keine Termine für diesen Tag.");
       }
-    }
+    };
 
-    // Initialisieren und Ereignisse laden
-    loadEvents();
+    window.addEventListener('DOMContentLoaded', () => {
+      loadEvents();
+
+      document.getElementById("addEventForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const day = document.getElementById("day").value;
+        const text = document.getElementById("eventText").value;
+
+        const refPath = ref(db, `events/${day}`);
+        const existingEvents = events[day] || [];
+        existingEvents.push(text);
+
+        update(ref(db), {
+          [`events/${day}`]: existingEvents
+        });
+
+        document.getElementById("addEventForm").reset();
+      });
+    });
   </script>
 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    .calendar-container {
+      width: 90%;
+      max-width: 800px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    #calendar {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .calendar-header th {
+      background-color: #eee;
+      padding: 10px;
+    }
+
+    .calendar-day {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .calendar-day.has-event {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    form {
+      margin-top: 20px;
+    }
+
+    input, button {
+      padding: 8px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="calendar-container">
+    <h1>Kalender</h1>
+    <div id="calendar">Lade Kalender...</div>
+
+    <form id="addEventForm">
+      <h3>Neuen Termin hinzufügen</h3>
+      <label>Tag: <input type="number" id="day" min="1" max="31" required /></label>
+      <label>Text: <input type="text" id="eventText" required /></label>
+      <button type="submit">Hinzufügen</button>
+    </form>
+  </div>
 </body>
 </html>
