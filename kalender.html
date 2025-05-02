@@ -346,18 +346,7 @@
   </script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-<script>
-  firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-      const referrer = document.referrer;
-      const isFromIndex = referrer.includes("index.html") || referrer === "";
 
-      if (!isFromIndex) {
-        window.location.href = "index.html";
-      }
-    }
-  });
-</script>
 
 </body>
 </html>
