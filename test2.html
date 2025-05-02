@@ -157,6 +157,14 @@
     const monthYear = document.getElementById("monthYear");
     const dayDetails = document.getElementById("dayDetails");
 
+    function getISOWeek(date) {
+      const tmp = new Date(date.getTime());
+      tmp.setHours(0, 0, 0, 0);
+      tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
+      const week1 = new Date(tmp.getFullYear(), 0, 4);
+      return 1 + Math.round(((tmp - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    }
+
     function changeMonth(offset) {
       currentDate.setMonth(currentDate.getMonth() + offset);
       renderCalendar();
@@ -178,12 +186,13 @@
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(year, month, day);
+        const fullDate = dateObj.toISOString().split("T")[0];
         const dayName = dateObj.toLocaleDateString("de-DE", { weekday: "short" });
+        const weekNumber = getISOWeek(dateObj);
         const dayDiv = document.createElement("div");
         dayDiv.className = "day";
-        dayDiv.innerHTML = `<strong>${day} ${dayName}</strong>`;
+        dayDiv.innerHTML = `<strong>${day} ${dayName} (KW ${weekNumber})</strong>`;
         dayDiv.ondrop = (e) => dropEvent(e, fullDate);
         dayDiv.ondragover = (e) => e.preventDefault();
         dayDiv.onclick = () => openDayDetails(fullDate);
@@ -195,9 +204,7 @@
               Object.entries(events).forEach(([key, ev]) => {
                 const fromDate = new Date(eventDate);
                 const toDate = new Date(ev.end || eventDate);
-                const loopDate = new Date(fullDate);
-
-                if (loopDate >= fromDate && loopDate <= toDate) {
+                if (dateObj >= fromDate && dateObj <= toDate) {
                   const div = document.createElement("div");
                   div.className = "event";
                   if (fromDate.getTime() !== toDate.getTime()) {
