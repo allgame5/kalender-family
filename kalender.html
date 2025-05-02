@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
+<html lang="de"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interaktiver Kalender</title>
@@ -129,11 +127,21 @@
   <div class="calendar">
     <div class="header">
       <button onclick="changeMonth(-1)">❮</button>
-      <h2 id="monthYear">Monat Jahr</h2>
+      <h2 id="monthYear">Mai 2025</h2>
       <button onclick="changeMonth(1)">❯</button>
     </div>
-    <div class="days" id="daysContainer"></div>
-    <div class="day-details" id="dayDetails" style="display:none;"></div>
+    <div class="days" id="daysContainer"><div></div><div></div><div></div><div class="day"><strong>1 Do</strong></div><div class="day"><strong>2 Fr</strong></div><div class="day"><strong>3 Sa</strong><div class="event" draggable="true">Cranio Oma (10:00-11:30)</div></div><div class="day"><strong>4 So</strong><div class="event" draggable="true">Cranio Oma (10:00-11:30)</div><div class="event" draggable="true">Cranio Frau Hofer (16:30-18:00)</div></div><div class="day"><strong>5 Mo</strong></div><div class="day"><strong>6 Di</strong></div><div class="day"><strong>7 Mi</strong></div><div class="day"><strong>8 Do</strong></div><div class="day"><strong>9 Fr</strong></div><div class="day"><strong>10 Sa</strong></div><div class="day"><strong>11 So</strong></div><div class="day"><strong>12 Mo</strong></div><div class="day"><strong>13 Di</strong></div><div class="day"><strong>14 Mi</strong></div><div class="day"><strong>15 Do</strong></div><div class="day"><strong>16 Fr</strong></div><div class="day"><strong>17 Sa</strong></div><div class="day"><strong>18 So</strong></div><div class="day"><strong>19 Mo</strong></div><div class="day"><strong>20 Di</strong></div><div class="day"><strong>21 Mi</strong></div><div class="day"><strong>22 Do</strong></div><div class="day"><strong>23 Fr</strong></div><div class="day"><strong>24 Sa</strong></div><div class="day"><strong>25 So</strong></div><div class="day"><strong>26 Mo</strong></div><div class="day"><strong>27 Di</strong></div><div class="day"><strong>28 Mi</strong></div><div class="day"><strong>29 Do</strong></div><div class="day"><strong>30 Fr</strong></div><div class="day"><strong>31 Sa</strong></div></div>
+    <div class="day-details" id="dayDetails" style="display: block;"><h3>Termine am 2025-05-03</h3><div id="eventList"><div>Cranio Oma (10:00-11:30)  
+              <div class="event-controls">
+                <span onclick="editEvent('2025-05-03','-OPFUzO6vjc1eFsDkROD')">✏️</span>
+                <span onclick="deleteEvent('2025-05-03','-OPFUzO6vjc1eFsDkROD')">🗑️</span>
+              </div></div></div><hr>
+        <label>Titel</label><input id="titleInput" type="text">
+        <label>Von</label><input id="fromInput" type="time">
+        <label>Bis</label><input id="toInput" type="time">
+        <label>Ende (optional)</label><input id="endDateInput" type="date">
+        <label><input id="notifyInput" type="checkbox"> Benachrichtigen</label>
+        <button onclick="addEvent('2025-05-03')">Speichern</button></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -339,17 +347,7 @@
 
     setInterval(checkNotifications, 60000);
     renderCalendar();
-
-
-     
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
-
   </script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
 
-
-</body>
-</html>
+</body></html>
