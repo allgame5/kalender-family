@@ -68,13 +68,12 @@
       cursor: move;
     }
 
-    .event:hover {
-      background-color: #303f9f;
+    .multi-day {
+      background: #4caf50 !important;
     }
 
-    .event-multiday {
-      background: #673ab7;
-      font-size: 11px;
+    .event:hover {
+      background-color: #303f9f;
     }
 
     .day-details {
@@ -158,9 +157,6 @@
     const monthYear = document.getElementById("monthYear");
     const dayDetails = document.getElementById("dayDetails");
 
-    let draggedEventData = null;
-    let draggedEventKey = null;
-
     function changeMonth(offset) {
       currentDate.setMonth(currentDate.getMonth() + offset);
       renderCalendar();
@@ -183,9 +179,11 @@
 
       for (let day = 1; day <= daysInMonth; day++) {
         const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateObj = new Date(year, month, day);
+        const dayName = dateObj.toLocaleDateString("de-DE", { weekday: "short" });
         const dayDiv = document.createElement("div");
         dayDiv.className = "day";
-        dayDiv.innerHTML = `<strong>${day}</strong>`;
+        dayDiv.innerHTML = `<strong>${day} ${dayName}</strong>`;
         dayDiv.ondrop = (e) => dropEvent(e, fullDate);
         dayDiv.ondragover = (e) => e.preventDefault();
         dayDiv.onclick = () => openDayDetails(fullDate);
@@ -193,21 +191,28 @@
         db.ref("events").once("value", snapshot => {
           const allEvents = snapshot.val();
           if (allEvents) {
-            Object.entries(allEvents).forEach(([key, ev]) => {
-              const startDate = new Date(ev.date);
-              const endDate = new Date(ev.endDate || ev.date);
-              const thisDate = new Date(fullDate);
-              if (thisDate >= startDate && thisDate <= endDate) {
-                const div = document.createElement("div");
-                div.className = "event event-multiday";
-                div.draggable = true;
-                div.textContent = `${ev.title} (${ev.from}-${ev.to})`;
-                div.ondragstart = () => {
-                  draggedEventData = ev;
-                  draggedEventKey = key;
-                };
-                dayDiv.appendChild(div);
-              }
+            Object.entries(allEvents).forEach(([eventDate, events]) => {
+              Object.entries(events).forEach(([key, ev]) => {
+                const fromDate = new Date(eventDate);
+                const toDate = new Date(ev.end || eventDate);
+                const loopDate = new Date(fullDate);
+
+                if (loopDate >= fromDate && loopDate <= toDate) {
+                  const div = document.createElement("div");
+                  div.className = "event";
+                  if (fromDate.getTime() !== toDate.getTime()) {
+                    div.classList.add("multi-day");
+                  }
+                  div.draggable = true;
+                  div.textContent = `${ev.title} (${ev.from}-${ev.to})`;
+                  div.ondragstart = () => {
+                    draggedEventData = ev;
+                    draggedEventKey = key;
+                    draggedEventData.oldDate = eventDate;
+                  };
+                  dayDiv.appendChild(div);
+                }
+              });
             });
           }
         });
@@ -216,80 +221,97 @@
       }
     }
 
+    let editMode = false;
+    let editKey = null;
+    let editDate = null;
+
     function openDayDetails(date) {
       dayDetails.style.display = "block";
       dayDetails.innerHTML = `<h3>Termine am ${date}</h3><div id="eventList"></div><hr>
         <label>Titel</label><input id="titleInput" type="text" />
         <label>Von</label><input id="fromInput" type="time" />
         <label>Bis</label><input id="toInput" type="time" />
-        <label>Startdatum</label><input id="startDateInput" type="date" value="${date}" />
-        <label>Enddatum</label><input id="endDateInput" type="date" value="${date}" />
+        <label>Ende (optional)</label><input id="endDateInput" type="date" />
         <label><input id="notifyInput" type="checkbox" /> Benachrichtigen</label>
-        <button onclick="addEvent()">Speichern</button>`;
+        <button onclick="addEvent('${date}')">Speichern</button>`;
 
       const list = document.getElementById("eventList");
-      db.ref("events").once("value", snapshot => {
+      db.ref("events/" + date).once("value", snapshot => {
         const events = snapshot.val();
         if (events) {
           Object.entries(events).forEach(([key, ev]) => {
-            const d = new Date(date);
-            const start = new Date(ev.date);
-            const end = new Date(ev.endDate || ev.date);
-            if (d >= start && d <= end) {
-              const div = document.createElement("div");
-              div.innerHTML = `${ev.title} (${ev.from}-${ev.to}) ${ev.notify ? '🔔' : ''}
-                <div class="event-controls">
-                  <span onclick="editEvent('${key}')">✏️</span>
-                  <span onclick="deleteEvent('${key}')">🗑️</span>
-                </div>`;
-              list.appendChild(div);
-            }
+            const div = document.createElement("div");
+            div.innerHTML = `${ev.title} (${ev.from}-${ev.to}) ${ev.notify ? '🔔' : ''} 
+              <div class="event-controls">
+                <span onclick="editEvent('${date}','${key}')">✏️</span>
+                <span onclick="deleteEvent('${date}','${key}')">🗑️</span>
+              </div>`;
+            list.appendChild(div);
           });
         }
       });
     }
 
-    function addEvent() {
+    function addEvent(date) {
       const title = document.getElementById("titleInput").value;
       const from = document.getElementById("fromInput").value;
       const to = document.getElementById("toInput").value;
-      const date = document.getElementById("startDateInput").value;
-      const endDate = document.getElementById("endDateInput").value;
+      const end = document.getElementById("endDateInput").value;
       const notify = document.getElementById("notifyInput").checked;
 
-      if (!title || !from || !to || !date) {
+      if (!title || !from || !to) {
         alert("Bitte alle Felder ausfüllen.");
         return;
       }
 
-      db.ref("events").push({ title, from, to, date, endDate, notify });
+      const newData = { title, from, to, notify };
+      if (end) newData.end = end;
+
+      if (editMode && editKey && editDate === date) {
+        db.ref("events/" + date + "/" + editKey).set(newData);
+      } else {
+        db.ref("events/" + date).push(newData);
+      }
+
+      editMode = false;
+      editKey = null;
+      editDate = null;
+
       renderCalendar();
       openDayDetails(date);
     }
 
-    function editEvent(key) {
-      db.ref("events/" + key).once("value", snapshot => {
+    function editEvent(date, key) {
+      db.ref("events/" + date + "/" + key).once("value", snapshot => {
         const ev = snapshot.val();
         document.getElementById("titleInput").value = ev.title;
         document.getElementById("fromInput").value = ev.from;
         document.getElementById("toInput").value = ev.to;
-        document.getElementById("startDateInput").value = ev.date;
-        document.getElementById("endDateInput").value = ev.endDate || ev.date;
+        document.getElementById("endDateInput").value = ev.end || "";
         document.getElementById("notifyInput").checked = ev.notify;
 
-        db.ref("events/" + key).remove();
+        editMode = true;
+        editKey = key;
+        editDate = date;
       });
     }
 
-    function deleteEvent(key) {
-      db.ref("events/" + key).remove();
+    function deleteEvent(date, key) {
+      db.ref("events/" + date + "/" + key).remove();
       renderCalendar();
-      dayDetails.style.display = "none";
+      openDayDetails(date);
     }
 
     function dropEvent(e, newDate) {
-      if (draggedEventData && draggedEventKey) {
-        db.ref("events/" + draggedEventKey).update({ date: newDate, endDate: newDate });
+      if (draggedEventData && draggedEventKey && draggedEventData.oldDate !== newDate) {
+        db.ref("events/" + draggedEventData.oldDate + "/" + draggedEventKey).remove();
+        db.ref("events/" + newDate).push({
+          title: draggedEventData.title,
+          from: draggedEventData.from,
+          to: draggedEventData.to,
+          notify: draggedEventData.notify,
+          end: draggedEventData.end || null
+        });
         renderCalendar();
         dayDetails.style.display = "none";
       }
@@ -300,17 +322,20 @@
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      db.ref("events").once("value", snapshot => {
+      db.ref("events/" + today).once("value", snapshot => {
         const events = snapshot.val();
         if (events) {
           Object.values(events).forEach(ev => {
-            if (ev.notify && ev.date === today && ev.from === currentTime) {
+            if (ev.notify && ev.from === currentTime) {
               alert(`Erinnerung: ${ev.title} beginnt jetzt!`);
             }
           });
         }
       });
     }
+
+    let draggedEventData = null;
+    let draggedEventKey = null;
 
     setInterval(checkNotifications, 60000);
     renderCalendar();
