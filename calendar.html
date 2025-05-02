@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaktiver Kalender</title>
+  <style>
+    /* Dein bestehendes CSS bleibt unverändert */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fc;
+      margin: 0;
+      padding: 0;
+    }
+
+    .calendar {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 30px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .header button {
+      background: #3f51b5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 18px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .day {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fff;
+      min-height: 100px;
+      position: relative;
+    }
+
+    .day:hover {
+      background-color: #f0f0f0;
+    }
+
+    .event {
+      background: #3f51b5;
+      color: #fff;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 5px;
+      cursor: move;
+    }
+
+    .multi-day {
+      background: #4caf50 !important;
+    }
+
+    .event:hover {
+      background-color: #303f9f;
+    }
+
+    .day-details {
+      margin-top: 20px;
+      padding: 20px;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    input, label {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    input[type="text"], input[type="time"], input[type="date"] {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #303f9f;
+    }
+
+    .event-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      font-size: 12px;
+    }
+
+    .event-controls span {
+      cursor: pointer;
+      color: white;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="calendar">
+    <div class="header">
+      <button onclick="changeMonth(-1)">❮</button>
+      <h2 id="monthYear">Mai 2025</h2>
+      <button onclick="changeMonth(1)">❯</button>
+    </div>
+    <div class="days" id="daysContainer"></div>
+    <div class="day-details" id="dayDetails" style="display: none;">
+      <h3>Termine am</h3>
+      <div id="eventList"></div>
+      <hr>
+      <label>Titel</label><input id="titleInput" type="text">
+      <label>Von</label><input id="fromInput" type="time">
+      <label>Bis</label><input id="toInput" type="time">
+      <label>Ende (optional)</label><input id="endDateInput" type="date">
+      <label><input id="notifyInput" type="checkbox"> Benachrichtigen</label>
+      <button onclick="addEvent('2025-05-03')">Speichern</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAbvF26pw-NVQGW1lMmNCW3avQllWXylpY",
+      authDomain: "kalender-3da21.firebaseapp.com",
+      projectId: "kalender-3da21",
+      storageBucket: "kalender-3da21.appspot.com",
+      messagingSenderId: "731037868090",
+      appId: "1:731037868090:web:02ac820fbb8bb9abd21503",
+      measurementId: "G-DTYRKLSD4L"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Überprüfe, ob der Benutzer angemeldet ist
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'login.html'; // Wenn der Benutzer nicht eingeloggt ist, gehe zur Login-Seite
+      }
+    });
+
+    // Dein Kalender-Code bleibt hier unverändert
+    let currentDate = new Date();
+    const daysContainer = document.getElementById("daysContainer");
+    const monthYear = document.getElementById("monthYear");
+    const dayDetails = document.getElementById("dayDetails");
+
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      daysContainer.innerHTML = "";
+      dayDetails.style.display = "none";
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      monthYear.textContent = currentDate.toLocaleString("de-DE", { month: "long", year: "numeric" });
+
+      for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+        daysContainer.innerHTML += `<div></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateObj = new Date(year, month, day);
+        const dayName = dateObj.toLocaleDateString("de-DE", { weekday: "short" });
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+        dayDiv.innerHTML = `<strong>${day} ${dayName}</strong>`;
+        dayDiv.ondrop = (e) => dropEvent(e, fullDate);
+        dayDiv.ondragover = (e) => e.preventDefault();
+        dayDiv.onclick = () => openDayDetails(fullDate);
+
+        db.ref("events").once("value", snapshot => {
+          const allEvents = snapshot.val();
+          if (allEvents) {
+            Object.entries(allEvents).forEach(([eventDate, events]) => {
+              Object.entries(events).forEach(([key, ev]) => {
+                const fromDate = new Date(eventDate);
+                const toDate = new Date(ev.end || eventDate);
+                const loopDate = new Date(fullDate);
+
+                if (loopDate >= fromDate && loopDate <= toDate) {
+                  const div = document.createElement("div");
+                  div.className = "event";
+                  if (fromDate.getTime() !== toDate.getTime()) {
+                    div.classList.add("multi-day");
+                  }
+                  div.draggable = true;
+                  div.textContent = `${ev.title} (${ev.from}-${ev.to})`;
+                  div.ondragstart = () => {
+                    draggedEventData = ev;
+                    draggedEventKey = key;
+                    draggedEventData.oldDate = eventDate;
+                  };
+                  dayDiv.appendChild(div);
+                }
+              });
+            });
+          }
+        });
+
+        daysContainer.appendChild(dayDiv);
+      }
+    }
+
+    let draggedEventData = null;
+    let draggedEventKey = null;
+
+    function addEvent(date) {
+      const title = document.getElementById("titleInput").value;
+      const from = document.getElementById("fromInput").value;
+      const to = document.getElementById("toInput").value;
+      const end = document.getElementById("endDateInput").value;
+      const notify = document.getElementById("notifyInput").checked;
+
+      if (!title || !from || !to) {
+        alert("Bitte alle Felder ausfüllen.");
+        return;
+      }
+
+      const newData = { title, from, to, notify };
+      if (end) newData.end = end;
+
+      db.ref("events/" + date).push(newData);
+
+      renderCalendar();
+      openDayDetails(date);
+    }
+
+    function openDayDetails(date) {
+      dayDetails.style.display = "block";
+      dayDetails.innerHTML = `<h3>Termine am ${date}</h3><div id="eventList"></div><hr>
+        <label>Titel</label><input id="titleInput" type="text" />
+        <label>Von</label><input id="fromInput" type="time" />
+        <label>Bis</label><input id="toInput" type="time" />
+        <label>Ende (optional)</label><input id="endDateInput" type="date" />
+        <label><input id="notifyInput" type="checkbox" /> Benachrichtigen</label>
+        <button onclick="addEvent('${date}')">Speichern</button>`;
+
+      const list = document.getElementById("eventList");
+      db.ref("events/" + date).once("value", snapshot => {
+        const events = snapshot.val();
+        if (events) {
+          Object.entries(events).forEach(([key, ev]) => {
+            const div = document.createElement("div");
+            div.innerHTML = `${ev.title} (${ev.from}-${ev.to}) ${ev.notify ? '🔔' : ''} 
+              <div class="event-controls">
+                <span onclick="editEvent('${date}','${key}')">✏️</span>
+                <span onclick="deleteEvent('${date}','${key}')">🗑️</span>
+              </div>`;
+            list.appendChild(div);
+          });
+        }
+      });
+    }
+
+    renderCalendar(); // Kalender beim Laden anzeigen
+  </script>
+</body>
+</html>
