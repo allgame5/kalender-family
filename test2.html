@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
@@ -126,17 +125,28 @@
   </style>
 </head>
 <body>
-  <div class="calendar">
+  <div class="calendar" id="calendarContainer" style="display: none;">
     <div class="header">
       <button onclick="changeMonth(-1)">❮</button>
-      <h2 id="monthYear">Monat Jahr</h2>
+      <h2 id="monthYear">Mai 2025</h2>
       <button onclick="changeMonth(1)">❯</button>
     </div>
-    <div class="days" id="daysContainer"></div>
-    <div class="day-details" id="dayDetails" style="display:none;"></div>
+    <div class="days" id="daysContainer"><div></div><div></div><div></div><div class="day"><strong>1 Do</strong></div><div class="day"><strong>2 Fr</strong></div><div class="day"><strong>3 Sa</strong><div class="event" draggable="true">Cranio Oma (10:00-11:30)</div></div><div class="day"><strong>4 So</strong><div class="event" draggable="true">Cranio Oma (10:00-11:30)</div><div class="event" draggable="true">Cranio Frau Hofer (16:30-18:00)</div></div><div class="day"><strong>5 Mo</strong></div><div class="day"><strong>6 Di</strong></div><div class="day"><strong>7 Mi</strong></div><div class="day"><strong>8 Do</strong></div><div class="day"><strong>9 Fr</strong></div><div class="day"><strong>10 Sa</strong></div><div class="day"><strong>11 So</strong></div><div class="day"><strong>12 Mo</strong></div><div class="day"><strong>13 Di</strong></div><div class="day"><strong>14 Mi</strong></div><div class="day"><strong>15 Do</strong></div><div class="day"><strong>16 Fr</strong></div><div class="day"><strong>17 Sa</strong></div><div class="day"><strong>18 So</strong></div><div class="day"><strong>19 Mo</strong></div><div class="day"><strong>20 Di</strong></div><div class="day"><strong>21 Mi</strong></div><div class="day"><strong>22 Do</strong></div><div class="day"><strong>23 Fr</strong></div><div class="day"><strong>24 Sa</strong></div><div class="day"><strong>25 So</strong></div><div class="day"><strong>26 Mo</strong></div><div class="day"><strong>27 Di</strong></div><div class="day"><strong>28 Mi</strong></div><div class="day"><strong>29 Do</strong></div><div class="day"><strong>30 Fr</strong></div><div class="day"><strong>31 Sa</strong></div></div>
+    <div class="day-details" id="dayDetails" style="display: block;"><h3>Termine am 2025-05-03</h3><div id="eventList"><div>Cranio Oma (10:00-11:30)  
+              <div class="event-controls">
+                <span onclick="editEvent('2025-05-03','-OPFUzO6vjc1eFsDkROD')">✏️</span>
+                <span onclick="deleteEvent('2025-05-03','-OPFUzO6vjc1eFsDkROD')">🗑️</span>
+              </div></div></div><hr>
+        <label>Titel</label><input id="titleInput" type="text">
+        <label>Von</label><input id="fromInput" type="time">
+        <label>Bis</label><input id="toInput" type="time">
+        <label>Ende (optional)</label><input id="endDateInput" type="date">
+        <label><input id="notifyInput" type="checkbox"> Benachrichtigen</label>
+        <button onclick="addEvent('2025-05-03')">Speichern</button></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
@@ -150,19 +160,26 @@
       measurementId: "G-DTYRKLSD4L"
     };
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
 
     let currentDate = new Date();
     const daysContainer = document.getElementById("daysContainer");
     const monthYear = document.getElementById("monthYear");
     const dayDetails = document.getElementById("dayDetails");
+    const calendarContainer = document.getElementById("calendarContainer");
 
-    function getISOWeek(date) {
-      const tmp = new Date(date.getTime());
-      tmp.setHours(0, 0, 0, 0);
-      tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
-      const week1 = new Date(tmp.getFullYear(), 0, 4);
-      return 1 + Math.round(((tmp - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+    window.onload = function() {
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          // Wenn der Benutzer nicht eingeloggt ist, weiter zur Login-Seite
+          window.location.href = "login.html";
+        } else {
+          // Wenn der Benutzer eingeloggt ist, Kalender anzeigen
+          calendarContainer.style.display = "block";
+          renderCalendar();
+        }
+      });
     }
 
     function changeMonth(offset) {
@@ -186,75 +203,35 @@
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
+        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(year, month, day);
-        const fullDate = dateObj.toISOString().split("T")[0];
         const dayName = dateObj.toLocaleDateString("de-DE", { weekday: "short" });
-        const weekNumber = getISOWeek(dateObj);
         const dayDiv = document.createElement("div");
         dayDiv.className = "day";
-        dayDiv.innerHTML = `<strong>${day} ${dayName} (KW ${weekNumber})</strong>`;
+        dayDiv.innerHTML = `<strong>${day} ${dayName}</strong>`;
         dayDiv.ondrop = (e) => dropEvent(e, fullDate);
         dayDiv.ondragover = (e) => e.preventDefault();
-        dayDiv.onclick = () => openDayDetails(fullDate);
-
-        db.ref("events").once("value", snapshot => {
-          const allEvents = snapshot.val();
-          if (allEvents) {
-            Object.entries(allEvents).forEach(([eventDate, events]) => {
-              Object.entries(events).forEach(([key, ev]) => {
-                const fromDate = new Date(eventDate);
-                const toDate = new Date(ev.end || eventDate);
-                if (dateObj >= fromDate && dateObj <= toDate) {
-                  const div = document.createElement("div");
-                  div.className = "event";
-                  if (fromDate.getTime() !== toDate.getTime()) {
-                    div.classList.add("multi-day");
-                  }
-                  div.draggable = true;
-                  div.textContent = `${ev.title} (${ev.from}-${ev.to})`;
-                  div.ondragstart = () => {
-                    draggedEventData = ev;
-                    draggedEventKey = key;
-                    draggedEventData.oldDate = eventDate;
-                  };
-                  dayDiv.appendChild(div);
-                }
-              });
-            });
-          }
-        });
-
+        dayDiv.addEventListener("click", () => showDayDetails(fullDate));
         daysContainer.appendChild(dayDiv);
       }
     }
 
-    let editMode = false;
-    let editKey = null;
-    let editDate = null;
-
-    function openDayDetails(date) {
+    function showDayDetails(date) {
       dayDetails.style.display = "block";
-      dayDetails.innerHTML = `<h3>Termine am ${date}</h3><div id="eventList"></div><hr>
-        <label>Titel</label><input id="titleInput" type="text" />
-        <label>Von</label><input id="fromInput" type="time" />
-        <label>Bis</label><input id="toInput" type="time" />
-        <label>Ende (optional)</label><input id="endDateInput" type="date" />
-        <label><input id="notifyInput" type="checkbox" /> Benachrichtigen</label>
-        <button onclick="addEvent('${date}')">Speichern</button>`;
+      document.getElementById("dayDetails").innerHTML = `<h3>Termine am ${date}</h3><div id="eventList"></div>`;
+      loadEvents(date);
+    }
 
-      const list = document.getElementById("eventList");
-      db.ref("events/" + date).once("value", snapshot => {
-        const events = snapshot.val();
-        if (events) {
-          Object.entries(events).forEach(([key, ev]) => {
-            const div = document.createElement("div");
-            div.innerHTML = `${ev.title} (${ev.from}-${ev.to}) ${ev.notify ? '🔔' : ''} 
-              <div class="event-controls">
-                <span onclick="editEvent('${date}','${key}')">✏️</span>
-                <span onclick="deleteEvent('${date}','${key}')">🗑️</span>
-              </div>`;
-            list.appendChild(div);
-          });
+    function loadEvents(date) {
+      db.ref("events/" + date).once("value", (snapshot) => {
+        const eventList = snapshot.val();
+        const eventListDiv = document.getElementById("eventList");
+        eventListDiv.innerHTML = "";
+        for (const eventId in eventList) {
+          const event = eventList[eventId];
+          const eventDiv = document.createElement("div");
+          eventDiv.textContent = `${event.title} (${event.start} - ${event.end})`;
+          eventListDiv.appendChild(eventDiv);
         }
       });
     }
@@ -263,89 +240,19 @@
       const title = document.getElementById("titleInput").value;
       const from = document.getElementById("fromInput").value;
       const to = document.getElementById("toInput").value;
-      const end = document.getElementById("endDateInput").value;
+      const endDate = document.getElementById("endDateInput").value;
       const notify = document.getElementById("notifyInput").checked;
 
-      if (!title || !from || !to) {
-        alert("Bitte alle Felder ausfüllen.");
-        return;
-      }
+      const event = {
+        title: title,
+        start: from,
+        end: to,
+        notify: notify
+      };
 
-      const newData = { title, from, to, notify };
-      if (end) newData.end = end;
-
-      if (editMode && editKey && editDate === date) {
-        db.ref("events/" + date + "/" + editKey).set(newData);
-      } else {
-        db.ref("events/" + date).push(newData);
-      }
-
-      editMode = false;
-      editKey = null;
-      editDate = null;
-
-      renderCalendar();
-      openDayDetails(date);
+      db.ref("events/" + date).push(event);
+      loadEvents(date);
     }
-
-    function editEvent(date, key) {
-      db.ref("events/" + date + "/" + key).once("value", snapshot => {
-        const ev = snapshot.val();
-        document.getElementById("titleInput").value = ev.title;
-        document.getElementById("fromInput").value = ev.from;
-        document.getElementById("toInput").value = ev.to;
-        document.getElementById("endDateInput").value = ev.end || "";
-        document.getElementById("notifyInput").checked = ev.notify;
-
-        editMode = true;
-        editKey = key;
-        editDate = date;
-      });
-    }
-
-    function deleteEvent(date, key) {
-      db.ref("events/" + date + "/" + key).remove();
-      renderCalendar();
-      openDayDetails(date);
-    }
-
-    function dropEvent(e, newDate) {
-      if (draggedEventData && draggedEventKey && draggedEventData.oldDate !== newDate) {
-        db.ref("events/" + draggedEventData.oldDate + "/" + draggedEventKey).remove();
-        db.ref("events/" + newDate).push({
-          title: draggedEventData.title,
-          from: draggedEventData.from,
-          to: draggedEventData.to,
-          notify: draggedEventData.notify,
-          end: draggedEventData.end || null
-        });
-        renderCalendar();
-        dayDetails.style.display = "none";
-      }
-    }
-
-    function checkNotifications() {
-      const now = new Date();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-      db.ref("events/" + today).once("value", snapshot => {
-        const events = snapshot.val();
-        if (events) {
-          Object.values(events).forEach(ev => {
-            if (ev.notify && ev.from === currentTime) {
-              alert(`Erinnerung: ${ev.title} beginnt jetzt!`);
-            }
-          });
-        }
-      });
-    }
-
-    let draggedEventData = null;
-    let draggedEventKey = null;
-
-    setInterval(checkNotifications, 60000);
-    renderCalendar();
   </script>
 </body>
 </html>
