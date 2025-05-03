@@ -1,5 +1,5 @@
 <html lang="de">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interaktiver Kalender</title>
@@ -122,9 +122,10 @@
         color: white;
         margin-left: 5px;
       }
+
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="calendar">
       <div class="header">
         <button onclick="changeMonth(-1)">❮</button>
@@ -165,6 +166,8 @@
       const monthYear = document.getElementById("monthYear");
       const dayDetails = document.getElementById("dayDetails");
 
+      let isTouchDevice = 'ontouchstart' in document.documentElement;
+
       function changeMonth(offset) {
         currentDate.setMonth(currentDate.getMonth() + offset);
         renderCalendar();
@@ -192,8 +195,6 @@
           const dayDiv = document.createElement("div");
           dayDiv.className = "day";
           dayDiv.innerHTML = `<strong>${day} ${dayName}</strong>`;
-          dayDiv.ondrop = (e) => dropEvent(e, fullDate);
-          dayDiv.ondragover = (e) => e.preventDefault();
           dayDiv.onclick = () => openDayDetails(fullDate);
 
           db.ref("events").once("value", snapshot => {
@@ -211,13 +212,15 @@
                     if (fromDate.getTime() !== toDate.getTime()) {
                       div.classList.add("multi-day");
                     }
-                    div.draggable = true;
                     div.textContent = `${ev.title} (${ev.from}-${ev.to})`;
-                    div.ondragstart = () => {
-                      draggedEventData = ev;
-                      draggedEventKey = key;
-                      draggedEventData.oldDate = eventDate;
-                    };
+                    if (!isTouchDevice) {
+                      div.draggable = true;
+                      div.ondragstart = () => {
+                        draggedEventData = ev;
+                        draggedEventKey = key;
+                        draggedEventData.oldDate = eventDate;
+                      };
+                    }
                     dayDiv.appendChild(div);
                   }
                 });
@@ -228,10 +231,6 @@
           daysContainer.appendChild(dayDiv);
         }
       }
-
-      let editMode = false;
-      let editKey = null;
-      let editDate = null;
 
       function openDayDetails(date) {
         dayDetails.style.display = "block";
@@ -275,54 +274,9 @@
         const newData = { title, from, to, notify };
         if (end) newData.end = end;
 
-        if (editMode && editKey && editDate === date) {
-          db.ref("events/" + date + "/" + editKey).set(newData);
-        } else {
-          db.ref("events/" + date).push(newData);
-        }
-
-        editMode = false;
-        editKey = null;
-        editDate = null;
-
+        db.ref("events/" + date).push(newData);
         renderCalendar();
         openDayDetails(date);
-      }
-
-      function editEvent(date, key) {
-        db.ref("events/" + date + "/" + key).once("value", snapshot => {
-          const ev = snapshot.val();
-          document.getElementById("titleInput").value = ev.title;
-          document.getElementById("fromInput").value = ev.from;
-          document.getElementById("toInput").value = ev.to;
-          document.getElementById("endDateInput").value = ev.end || "";
-          document.getElementById("notifyInput").checked = ev.notify;
-
-          editMode = true;
-          editKey = key;
-          editDate = date;
-        });
-      }
-
-      function deleteEvent(date, key) {
-        db.ref("events/" + date + "/" + key).remove();
-        renderCalendar();
-        openDayDetails(date);
-      }
-
-      function dropEvent(e, newDate) {
-        if (draggedEventData && draggedEventKey && draggedEventData.oldDate !== newDate) {
-          db.ref("events/" + draggedEventData.oldDate + "/" + draggedEventKey).remove();
-          db.ref("events/" + newDate).push({
-            title: draggedEventData.title,
-            from: draggedEventData.from,
-            to: draggedEventData.to,
-            notify: draggedEventData.notify,
-            end: draggedEventData.end || null
-          });
-          renderCalendar();
-          dayDetails.style.display = "none";
-        }
       }
 
       function checkNotifications() {
@@ -348,5 +302,5 @@
       setInterval(checkNotifications, 60000);
       renderCalendar();
     </script>
-  </body>
+</body>
 </html>
